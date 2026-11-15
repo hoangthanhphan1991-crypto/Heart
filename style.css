@@ -1,0 +1,516 @@
+/* ============================================================
+   TWEAKABLES — sizes and timings you'll most likely want to touch
+   ============================================================ */
+:root {
+  --bg:            #FFE4EA;   /* page background */
+  --heart-size:    clamp(122px, 33vw, 170px);  /* heart width */
+  --cupid-size:    clamp(68px, 19vw, 100px);   /* cupid width, arrow included */
+  --letter-gap:    32px;      /* space between the heart's edge and each initial */
+  --cupid-left:    clamp(1px, 0.5vw, 6px);     /* cupid's gap from the left edge */
+
+  --beat-duration: 1.4s;      /* one full lub-dub-pause cycle. Higher = slower pulse. */
+  --float-duration: 3s;       /* cupid's idle hover */
+  --flap-duration: 0.9s;      /* wing flap */
+}
+
+/* ---------- Full-screen, no scroll, no zoom ---------- */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  /* position:fixed stops iOS Safari's rubber-band bounce */
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  /* manipulation disables the double-tap-to-zoom delay */
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  /* The scene is sized in vw, so it only composes correctly at phone widths.
+     Cap it and centre it, otherwise Cupid drifts to the far edge of a desktop
+     window. Below 440px this never applies, so phones are unaffected. */
+  max-width: 440px;
+  margin: 0 auto;
+  height: 100dvh;          /* dvh keeps it correct when Safari's bars hide */
+  height: 100vh;           /* fallback first, dvh wins where supported */
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ============================================================
+   HEART
+   ============================================================ */
+
+/* Outer wrapper: centres the heart and runs the endless heartbeat. */
+.heart-beat {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;              /* centring kept off `transform` so the
+                                        animation below owns transform outright */
+  animation: heartbeat var(--beat-duration) ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Inner wrapper: the impact reaction. Nesting means impact scale multiplies
+   with the heartbeat scale instead of cancelling it. */
+.heart-impact {
+  position: relative;
+  display: block;
+  will-change: transform;
+}
+
+.heart-img {
+  display: block;
+  width: var(--heart-size);
+  height: auto;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* Stuck arrows sit in here, so they inherit both heartbeat and impact. */
+.stuck-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* lub ... dub ... rest. Percentages are of --beat-duration.
+   Lower the scale numbers for a deeper squeeze. */
+@keyframes heartbeat {
+    0% { transform: scale(1);    }
+    8% { transform: scale(0.88); }   /* lub  — the big squeeze */
+   16% { transform: scale(1.02); }   /*        bounce back, slight overshoot */
+   22% { transform: scale(1);    }
+   30% { transform: scale(0.94); }   /* dub  — the smaller second squeeze */
+   38% { transform: scale(1.01); }
+   44% { transform: scale(1);    }
+  100% { transform: scale(1);    }   /* rest — the remaining ~56% is the pause */
+}
+
+/* Impact: a big pulse plus a sideways knock. ~480ms, added by JS as .hit */
+@keyframes heartHit {
+    0% { transform: scale(1)    translateX(0);    }
+   18% { transform: scale(1.30) translateX(7px);  }
+   40% { transform: scale(0.96) translateX(-5px); }
+   62% { transform: scale(1.08) translateX(3px);  }
+  100% { transform: scale(1)    translateX(0);    }
+}
+.heart-impact.hit { animation: heartHit 480ms cubic-bezier(.22, 1, .36, 1); }
+
+/* ============================================================
+   CUPID
+   ============================================================ */
+
+.cupid {
+  position: absolute;
+  left: var(--cupid-left);
+  top: 50%;
+  width: var(--cupid-size);
+  /* Bow sits at ~48% of the SVG's height, so no nudge is needed to line it
+     up with the heart's centre — keep the shot close to horizontal. */
+  translate: 0 -50%;
+  animation: float var(--float-duration) ease-in-out infinite;
+  will-change: transform;
+}
+.cupid svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* Gentle idle hover */
+@keyframes float {
+  0%, 100% { transform: translateY(-7px); }
+  50%      { transform: translateY(7px);  }
+}
+
+/* Wings. transform-box:fill-box makes transform-origin relative to each
+   wing's own shape; 100% 100% is the base, where it joins the back. */
+.wing {
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+  animation: flap var(--flap-duration) ease-in-out infinite alternate;
+}
+.wing-back  { animation-delay: -0.15s; }
+.wing-front { animation-delay: 0s; }
+
+@keyframes flap {
+  from { transform: rotate(-12deg); }
+  to   { transform: rotate(10deg);  }
+}
+
+/* Bow recoil on release — JS adds .wobble for one run */
+.bow { transform-box: fill-box; transform-origin: 50% 50%; }
+@keyframes bowWobble {
+    0% { transform: rotate(0deg)    scaleX(1);    }
+   25% { transform: rotate(-4deg)   scaleX(0.95); }
+   55% { transform: rotate(2.5deg)  scaleX(1.03); }
+   80% { transform: rotate(-1.2deg) scaleX(0.99); }
+  100% { transform: rotate(0deg)    scaleX(1);    }
+}
+.bow.wobble { animation: bowWobble 320ms ease-out; }
+
+/* ============================================================
+   ARROWS + SPARKLES
+   ============================================================ */
+
+.fx-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Both arrow types are zero-size anchors: the SVG hangs off to the LEFT of
+   the anchor point, so the anchor IS the arrow tip. That makes
+   `translate(x,y) rotate(a)` rotate around the tip, which is what we want
+   for both aiming the flight and pinning the stuck arrow. */
+.flyer, .stuck {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+.flyer svg, .stuck svg {
+  position: absolute;
+  right: 0;                 /* right edge == the tip == the anchor */
+  top: -10px;               /* half the arrow's height, to centre it */
+  overflow: visible;
+}
+
+/* Stuck arrows stay until Reset clears them. */
+
+/* Impact confetti: small hearts and sparkle dots */
+.spark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #FFD75E;
+  box-shadow: 0 0 6px rgba(255, 190, 60, .9);
+}
+.spark-heart {
+  width: auto;
+  height: auto;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  color: #FF5C84;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ============================================================
+   HINT
+   ============================================================ */
+.hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  margin: 0;
+  text-align: center;
+  color: #D98FA4;
+  font-size: 14px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  transition: opacity 500ms ease;
+}
+.hint.gone { opacity: 0; }
+
+/* Respect the OS "reduce motion" setting: keep the beat, drop the hovering. */
+@media (prefers-reduced-motion: reduce) {
+  .cupid, .wing { animation: none; }
+}
+
+/* ============================================================
+   INITIALS — revealed when the second arrow lands
+   ============================================================ */
+.letter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-family: 'Avenir Next', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 900;
+  font-size: clamp(28px, 8.5vw, 42px);
+  line-height: 1;
+  color: #E8202F;
+  -webkit-text-stroke: 3px #231F20;
+  paint-order: stroke fill;     /* keeps the stroke behind the fill */
+  pointer-events: none;
+  /* hidden until JS adds .show */
+  opacity: 0;
+  scale: 0.3;
+  transition: opacity 240ms ease, scale 320ms cubic-bezier(.2, 1.5, .4, 1);
+}
+/* Sit each initial just outside the heart, mirrored about the centre. */
+.letter-v { translate: calc(-50% - var(--heart-size) / 2 - var(--letter-gap)) -50%; }
+.letter-h { translate: calc(-50% + var(--heart-size) / 2 + var(--letter-gap)) -50%; }
+.letter.show { opacity: 1; scale: 1; }
+
+/* ============================================================
+   RESET BUTTON
+   ============================================================ */
+.reset {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 11px 30px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #231F20;
+  background: #FFFFFF;
+  border: 3px solid #231F20;
+  border-radius: 999px;
+  box-shadow: 0 3px 0 #231F20;
+  cursor: pointer;
+  /* only offered once there is something to clear */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+.reset.show { opacity: 1; pointer-events: auto; }
+.reset:active { translate: -50% 3px; box-shadow: 0 0 0 #231F20; }
+
+/* ============================================================
+   INFO TABS + SHEET
+   ============================================================ */
+.tabs {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top));
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+.tab {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #231F20;
+  background: #FFFFFF;
+  border: 2.5px solid #231F20;
+  border-radius: 999px;
+  padding: 7px 15px;
+  white-space: nowrap;          /* keep each label on one line */
+  box-shadow: 0 2px 0 #231F20;
+  cursor: pointer;
+}
+.tab:active { translate: 0 2px; box-shadow: 0 0 0 #231F20; }
+.tab.active { background: #E8202F; color: #fff; }
+
+/* dim the scene behind the open sheet */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(60, 20, 30, .34);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+  z-index: 4;
+}
+.scrim.show { opacity: 1; pointer-events: auto; }
+
+/* the sheet slides up from the bottom */
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  max-height: 76%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  background: #FFF8F3;
+  border-top: 3px solid #231F20;
+  border-radius: 22px 22px 0 0;
+  padding: 22px 20px calc(28px + env(safe-area-inset-bottom));
+  translate: 0 100%;
+  transition: translate 320ms cubic-bezier(.22, 1, .36, 1);
+}
+.sheet.open { translate: 0 0; }
+
+.sheet-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  width: 34px;
+  height: 34px;
+  margin: -6px -4px 0 0;
+  font-size: 22px;
+  line-height: 1;
+  color: #231F20;
+  background: #FFFFFF;
+  border: 2.5px solid #231F20;
+  border-radius: 50%;
+  cursor: pointer;
+  /* it stays pinned while the sheet scrolls, so give it a halo to lift it
+     clear of whatever text or diagram happens to be underneath */
+  box-shadow: 0 0 0 5px #FFF8F3;
+}
+.sheet-close:active { background: #F3E6E6; }
+
+/* only the selected panel is in the flow */
+.panel { display: none; }
+.panel.active { display: block; }
+
+.sheet h2 {
+  margin: 0 0 10px;
+  font-size: 25px;
+  line-height: 1.15;
+  color: #231F20;
+}
+.sheet h3 {
+  margin: 20px 0 6px;
+  font-size: 15px;
+  letter-spacing: .02em;
+  color: #C01B28;
+}
+.sheet p {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #3A3134;
+}
+.sheet .lede { font-size: 16px; color: #231F20; }
+.sheet b { font-weight: 700; color: #231F20; }
+
+/* the pull-quote tying it back to the app */
+.sheet .tiein {
+  margin-top: 18px;
+  padding: 12px 14px;
+  font-size: 14px;
+  background: #FFE4EA;
+  border-left: 4px solid #E8202F;
+  border-radius: 0 10px 10px 0;
+}
+
+/* ---------- diagrams ---------- */
+.diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 16px 0 6px;
+}
+.diagram .trace {
+  fill: none;
+  stroke: #231F20;
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.diagram .mark {
+  stroke: #E8202F;
+  stroke-width: 1.6;
+  stroke-dasharray: 3 3;
+}
+.diagram .wave {
+  font: 700 10px/1 'Avenir Next', Arial, sans-serif;
+  fill: #8A7F84;
+  text-anchor: middle;
+}
+.diagram .beat {
+  font: 800 12px/1 'Avenir Next', Arial, sans-serif;
+  fill: #E8202F;
+  text-anchor: middle;
+  letter-spacing: .08em;
+}
+.diagram .beat.dim { fill: #D9A3AB; }
+.diagram .span { stroke: #B9A9AE; stroke-width: 1.4; }
+.diagram .span-label {
+  font: 600 8.5px/1 'Avenir Next', Arial, sans-serif;
+  fill: #8A7F84;
+  text-anchor: middle;
+}
+
+.sheet .caption {
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: .04em;
+  color: #6F6468;
+}
+.sheet .caption .gold { color: #C9971B; }
+.sheet .caption .lead { color: #78818A; }
+
+/* ---------- anatomy diagram ---------- */
+.anatomy .wall { fill: #F2D6D6; stroke: #231F20; stroke-width: 2.4; }
+.anatomy .vessel { fill: none; stroke-width: 21; stroke-linecap: round; stroke-linejoin: round; }
+.anatomy .vessel.thin { stroke-width: 13; }
+.anatomy .vessel.deox { stroke: #8FA8E0; }
+.anatomy .vessel.ox   { stroke: #EE7F8E; }
+.anatomy .chamber { stroke: #231F20; stroke-width: 2.4; }
+.anatomy .chamber.deox { fill: #9FB6E8; }
+.anatomy .chamber.ox   { fill: #F3909D; }
+.anatomy .flowline { fill: none; stroke: #FFFFFF; stroke-width: 2.6; stroke-linecap: round; opacity: .95; }
+.anatomy .cname { font: 700 10px/1 'Avenir Next', Arial, sans-serif; fill: #2C2730; text-anchor: middle; letter-spacing: .03em; }
+.anatomy .valve circle { stroke: #231F20; stroke-width: 2; }
+.anatomy .valve text { font: 800 12px/1 'Avenir Next', Arial, sans-serif; fill: #fff; text-anchor: middle; }
+/* white on amber greys out at this size, so the semilunar digits go dark */
+.anatomy .valve.dub text { fill: #231F20; }
+.anatomy .valve.lub circle { fill: #E8202F; }
+.anatomy .valve.dub circle { fill: #E8A020; }
+.anatomy .lead path { fill: none; stroke: #8A7F84; stroke-width: 1.2; }
+.anatomy .vname text { font: 600 11px/1 'Avenir Next', Arial, sans-serif; fill: #574E52; }
+
+/* numbered pip, matching the valve markers in the diagram */
+.pip {
+  display: inline-grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  margin-right: 3px;
+  vertical-align: -4px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  border: 2px solid #231F20;
+  border-radius: 50%;
+}
+.pip.lub { background: #E8202F; }
+.pip.dub { background: #E8A020; color: #231F20; }
+
+.valve-key { margin: 10px 0 0; padding: 0; list-style: none; }
+.valve-key li {
+  margin-bottom: 9px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #3A3134;
+}
+
+/* second H2 inside a panel needs a rule above it to separate the sections */
+.sheet .h2b {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 2px solid #EBD9D9;
+}
+
+/* On anything wider than a phone, show the app as a centred phone-width
+   column against a slightly darker backdrop, so a desktop window previews
+   what the phone actually looks like. */
+@media (min-width: 480px) {
+  body { background: #E6CBD1; }
+  .stage {
+    background: var(--bg);
+    box-shadow: 0 0 0 1px rgba(60, 20, 30, .12), 0 10px 40px rgba(60, 20, 30, .16);
+  }
+}

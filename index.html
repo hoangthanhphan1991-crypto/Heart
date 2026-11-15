@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- viewport-fit=cover + user-scalable=no: fills the notch area, kills pinch/double-tap zoom -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Cupid's Heart</title>
+<meta name="description" content="A beating heart and a cupid who shoots it.">
+
+<!-- Add-to-home-screen / standalone -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FFE4EA">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cupid">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="icon" href="assets/favicon.png" sizes="48x48">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <!-- ===================== INFO TABS ===================== -->
+  <nav class="tabs" id="tabs" lang="vi">
+    <button class="tab" type="button" data-panel="heart">Trái tim</button>
+    <button class="tab" type="button" data-panel="arrow">Mũi tên</button>
+  </nav>
+
+  <!-- ===================== CUPID ===================== -->
+  <!-- .cupid floats up and down; the SVG inside holds the bow + string.
+       The whole figure is drawn facing RIGHT, toward the heart. -->
+  <div class="cupid" id="cupid">
+    <svg viewBox="0 0 160 150" xmlns="http://www.w3.org/2000/svg" aria-label="Cupid">
+      <defs>
+        <!-- one feather; a wing is four of these fanned out -->
+        <path id="feather" d="M0,0 C-9,-15 -9,-33 0,-48 C9,-33 9,-15 0,0 Z"/>
+        <g id="wingShape">
+          <g transform="rotate(-18)"><use href="#feather"/></g>
+          <g transform="rotate(-45)"><use href="#feather"/></g>
+          <g transform="rotate(-72)"><use href="#feather"/></g>
+          <g transform="rotate(-98) scale(.88)"><use href="#feather"/></g>
+        </g>
+      </defs>
+
+      <!-- Everything shares one heavy cartoon outline -->
+      <g stroke="#231F20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+
+        <!-- ===== WINGS (behind) ===== -->
+        <g transform="translate(48,76) scale(1.22)">
+          <g class="wing wing-back" fill="#E7EFF8"><use href="#wingShape"/></g>
+        </g>
+        <g transform="translate(55,69) scale(1.06)">
+          <g class="wing wing-front" fill="#FFFFFF"><use href="#wingShape"/></g>
+        </g>
+
+        <!-- ===== BACK LEG, kicked out behind ===== -->
+        <path d="M48,104 C36,112 26,116 18,122" fill="none" stroke-width="15"/>
+        <path d="M48,104 C36,112 26,116 18,122" fill="none" stroke="#FBD2AC" stroke-width="10"/>
+        <ellipse cx="14" cy="125" rx="9" ry="7" fill="#FBD2AC" transform="rotate(-20 14 125)"/>
+
+        <!-- ===== BODY ===== -->
+        <ellipse cx="58" cy="88" rx="23" ry="21" fill="#FBD2AC"/>
+        <!-- belly button -->
+        <path d="M58,92 q2,2 0,4" fill="none" stroke-width="2.4"/>
+
+        <!-- ===== FRONT LEG, tucked up ===== -->
+        <path d="M62,106 C72,114 76,122 74,130" fill="none" stroke-width="15"/>
+        <path d="M62,106 C72,114 76,122 74,130" fill="none" stroke="#FBD2AC" stroke-width="10"/>
+        <ellipse cx="74" cy="135" rx="7" ry="9" fill="#FBD2AC"/>
+
+        <!-- ===== DIAPER ===== -->
+        <path d="M37,94 C44,112 72,112 78,94 C81,110 71,122 58,122 C44,122 35,110 37,94 Z" fill="#FFFFFF"/>
+        <path d="M38,97 C46,106 70,106 77,97" fill="none" stroke-width="2.2" stroke="#C9D2DC"/>
+
+        <!-- ===== HEAD ===== -->
+        <circle cx="62" cy="48" r="24" fill="#FBD2AC"/>
+        <!-- curly hair: bumpy on top, curls hanging over the brow -->
+        <path d="M36,52 C31,41 34,28 43,23 C48,14 59,12 65,17 C73,11 85,15 88,24
+                 C97,28 99,41 93,50 C90,43 85,43 82,47 C80,39 72,37 68,43
+                 C66,34 56,33 53,40 C48,34 40,37 39,46 C38,49 37,51 36,52 Z" fill="#C8803C"/>
+        <!-- a couple of loose curls for texture -->
+        <path d="M45,30 q6,-6 11,-1" fill="none" stroke="#A8632A" stroke-width="2.4"/>
+        <path d="M68,22 q7,-3 11,3" fill="none" stroke="#A8632A" stroke-width="2.4"/>
+
+        <!-- ===== FACE (turned toward the heart) ===== -->
+        <circle cx="54" cy="59" r="7" fill="#E8484F" stroke="none"/>
+        <circle cx="81" cy="56" r="5.5" fill="#E8484F" stroke="none"/>
+        <ellipse cx="68" cy="50" rx="2.8" ry="3.8" fill="#231F20" stroke="none"/>
+        <ellipse cx="79" cy="49" rx="2.8" ry="3.8" fill="#231F20" stroke="none"/>
+        <circle cx="69" cy="48.6" r="1" fill="#fff" stroke="none"/>
+        <circle cx="80" cy="47.6" r="1" fill="#fff" stroke="none"/>
+        <path d="M63,41 q5,-4 10,-1" fill="none" stroke-width="2.4"/>
+        <path d="M75,40 q5,-3 9,1"   fill="none" stroke-width="2.4"/>
+        <path d="M69,61 q6,5 12,0" fill="none" stroke-width="2.6"/>
+
+        <!-- ===== BACK ARM: hand rides the string ===== -->
+        <g id="drawArm">
+          <path id="drawArmPath" d="M64,84 C80,82 94,78 104,72" fill="none" stroke-width="14"/>
+          <path id="drawArmSkin" d="M64,84 C80,82 94,78 104,72" fill="none" stroke="#FBD2AC" stroke-width="9"/>
+          <circle id="drawHand" cx="104" cy="72" r="7.5" fill="#FBD2AC"/>
+        </g>
+
+        <!-- ===== BOW ===== -->
+        <g class="bow" id="bow">
+          <path d="M104,26 C128,48 128,96 104,118" fill="none" stroke-width="10"/>
+          <path d="M104,26 C128,48 128,96 104,118" fill="none" stroke="#F7C943" stroke-width="5.5"/>
+          <!-- decorative curls at the limb tips -->
+          <path d="M104,26 C98,19 104,13 110,17" fill="none" stroke-width="7"/>
+          <path d="M104,26 C98,19 104,13 110,17" fill="none" stroke="#F7C943" stroke-width="3.4"/>
+          <path d="M104,118 C98,125 104,131 110,127" fill="none" stroke-width="7"/>
+          <path d="M104,118 C98,125 104,131 110,127" fill="none" stroke="#F7C943" stroke-width="3.4"/>
+          <rect x="116" y="62" width="9" height="20" rx="4.5" fill="#D99A20"/>
+          <polyline id="bowString" points="104,26 104,72 104,118"
+                    fill="none" stroke="#231F20" stroke-width="1.8"/>
+        </g>
+
+        <!-- ===== FRONT ARM: grips the bow ===== -->
+        <path d="M76,82 C94,80 108,76 118,72" fill="none" stroke-width="14"/>
+        <path d="M76,82 C94,80 108,76 118,72" fill="none" stroke="#FBD2AC" stroke-width="9"/>
+        <circle cx="120" cy="72" r="8" fill="#FBD2AC"/>
+
+        <!-- ===== NOCKED ARROW: tail on the string, slides with the nock ===== -->
+        <g id="nockArrow" opacity="1">
+          <path d="M106,72 L140,72" fill="none" stroke-width="7"/>
+          <path d="M106,72 L140,72" fill="none" stroke="#F7C943" stroke-width="3.4"/>
+          <path d="M137,63 L154,72 L137,81 L141,72 Z" fill="#F7C943"/>
+          <path d="M100,66 L112,60 L116,63 L105,69 Z" fill="#D9333F"/>
+          <path d="M100,78 L112,84 L116,81 L105,75 Z" fill="#B02A33"/>
+        </g>
+
+        <circle id="muzzle" cx="154" cy="72" r="1" opacity="0" stroke="none"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ===================== HEART ===================== -->
+  <!-- Two nested wrappers so the transforms compose instead of overwriting:
+       .heart-beat   = the endless lub-dub loop
+       .heart-impact = the one-shot pulse + shake when an arrow lands
+       Stuck arrows live inside, so they ride along with both. -->
+  <div class="heart-beat">
+    <div class="heart-impact" id="heartImpact">
+      <img class="heart-img" id="heartImg" src="assets/heart.png" alt="Heart" draggable="false">
+      <div class="stuck-layer" id="stuckLayer"></div>
+    </div>
+  </div>
+
+  <!-- Flying arrows and sparkles are drawn here, above everything -->
+  <div class="fx-layer" id="fxLayer"></div>
+
+  <!-- The initials, revealed by the SECOND arrow. Change the letters here. -->
+  <span class="letter letter-v" id="letterV">V</span>
+  <span class="letter letter-h" id="letterH">H</span>
+
+  <p class="hint" id="hint">tap anywhere</p>
+  <button class="reset" id="resetBtn" type="button">Reset</button>
+
+  <!-- ===================== INFO SHEET ===================== -->
+  <div class="scrim" id="scrim"></div>
+  <section class="sheet" id="sheet" aria-hidden="true">
+    <button class="sheet-close" id="sheetClose" type="button" aria-label="Close">&times;</button>
+
+    <!-- ---------- THE HEART ---------- -->
+    <article class="panel" id="panel-heart" lang="vi">
+      <h2>Bên trong trái tim</h2>
+      <p class="lede">Bốn buồng tim, hai chiếc bơm riêng biệt nằm cạnh nhau, và bốn
+        chiếc van một chiều chỉ cho máu đi qua theo đúng một hướng.</p>
+
+      <svg viewBox="0 0 472 348" xmlns="http://www.w3.org/2000/svg" class="diagram anatomy"
+           role="img" aria-label="Mặt cắt trái tim với bốn buồng tim, các mạch máu lớn và bốn van tim">
+        <defs>
+          <marker id="flow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,1 L9,5 L0,9 Z" fill="#FFFFFF"/>
+          </marker>
+        </defs>
+        <g transform="translate(46,2)">
+
+          <!-- ---------- myocardium ---------- -->
+          <path class="wall" d="M88,118 C86,86 118,68 152,76 C194,62 272,76 280,122
+                                C290,172 282,236 248,270 C218,298 140,294 112,260
+                                C90,232 90,150 88,118 Z"/>
+
+          <!-- ---------- great vessels, behind the chambers ---------- -->
+          <!-- superior vena cava -->
+          <path class="vessel deox" d="M112,36 L112,106"/>
+          <!-- inferior vena cava, climbing the outside from below -->
+          <path class="vessel deox" d="M76,308 L76,162 Q76,134 100,132"/>
+          <!-- aorta: up out of the left ventricle, arching over and down the left -->
+          <path class="vessel ox" d="M200,158 L200,100 Q200,62 164,58 Q138,56 138,96 L138,120"/>
+          <path class="vessel ox thin" d="M160,58 L160,26"/>
+          <path class="vessel ox thin" d="M182,64 L182,30"/>
+          <!-- pulmonary artery, drawn AFTER the aorta: its trunk really does pass in
+               front of the aortic root, so crossing over is the correct depiction -->
+          <path class="vessel deox" d="M172,158 L172,112 Q172,88 148,82 L126,78"/>
+          <!-- pulmonary veins into the left atrium -->
+          <path class="vessel ox" d="M322,118 L264,118"/>
+          <path class="vessel ox" d="M322,150 L264,150"/>
+
+          <!-- ---------- chambers ---------- -->
+          <rect class="chamber deox" x="98"  y="104" width="64" height="52" rx="21"/>
+          <rect class="chamber ox"   x="208" y="104" width="64" height="52" rx="21"/>
+          <rect class="chamber deox" x="98"  y="170" width="70" height="92" rx="25"/>
+          <rect class="chamber ox"   x="204" y="170" width="72" height="98" rx="26"/>
+
+          <!-- ---------- flow ---------- -->
+          <path class="flowline" d="M119,118 L119,142" marker-end="url(#flow)"/>
+          <path class="flowline" d="M121,190 L121,226" marker-end="url(#flow)"/>
+          <path class="flowline" d="M245,118 L245,142" marker-end="url(#flow)"/>
+          <path class="flowline" d="M245,190 L245,230" marker-end="url(#flow)"/>
+
+          <!-- ---------- chamber names ---------- -->
+          <text class="cname" x="130" y="126">TÂM NHĨ</text>
+          <text class="cname" x="130" y="138">PHẢI</text>
+          <text class="cname" x="240" y="126">TÂM NHĨ</text>
+          <text class="cname" x="240" y="138">TRÁI</text>
+          <text class="cname" x="133" y="208">TÂM THẤT</text>
+          <text class="cname" x="133" y="220">PHẢI</text>
+          <text class="cname" x="240" y="208">TÂM THẤT</text>
+          <text class="cname" x="240" y="220">TRÁI</text>
+
+          <!-- ---------- the four valves ---------- -->
+          <g class="valve lub"><circle cx="126" cy="163" r="10"/><text x="126" y="167">1</text></g>
+          <g class="valve lub"><circle cx="240" cy="163" r="10"/><text x="240" y="167">2</text></g>
+          <g class="valve dub"><circle cx="172" cy="158" r="10"/><text x="172" y="162">3</text></g>
+          <g class="valve dub"><circle cx="200" cy="158" r="10"/><text x="200" y="162">4</text></g>
+
+          <!-- ---------- leader lines + labels ---------- -->
+          <g class="lead">
+            <path d="M112,40 L66,34"/>
+            <path d="M76,276 L44,276"/>
+            <path d="M182,30 L218,24"/>
+            <path d="M126,78 L70,74"/>
+            <path d="M322,118 L340,118"/>
+          </g>
+          <g class="vname">
+            <text x="62"  y="34"  text-anchor="end">Tĩnh mạch</text>
+            <text x="62"  y="45"  text-anchor="end">chủ trên</text>
+            <text x="40"  y="272" text-anchor="end">Tĩnh mạch</text>
+            <text x="40"  y="283" text-anchor="end">chủ dưới</text>
+            <text x="222" y="27"  text-anchor="start">Động mạch chủ</text>
+            <text x="66"  y="70"  text-anchor="end">Động mạch</text>
+            <text x="66"  y="81"  text-anchor="end">phổi</text>
+            <text x="344" y="114" text-anchor="start">Tĩnh mạch</text>
+            <text x="344" y="125" text-anchor="start">phổi</text>
+          </g>
+        </g>
+      </svg>
+
+      <h3>Hai chiếc bơm, không phải một</h3>
+      <p>Nửa <b>bên phải</b> (màu xanh) nhận máu đã dùng từ khắp cơ thể trở về
+        rồi đẩy lên phổi. Nửa <b>bên trái</b> (màu đỏ) nhận máu từ phổi về, lúc này
+        đã đầy oxy, rồi bơm đi nuôi toàn bộ cơ thể. Hai nửa đập cùng một nhịp
+        nhưng máu không bao giờ trộn lẫn &mdash; ở giữa là một vách cơ ngăn đôi,
+        gọi là vách tim.</p>
+
+      <h3>Vòng tuần hoàn</h3>
+      <p>Máu từ cơ thể theo hai <b>tĩnh mạch chủ</b> đổ về <b>tâm nhĩ phải</b>,
+        xuống <b>tâm thất phải</b>, rồi được đẩy qua <b>động mạch phổi</b> lên
+        phổi. Máu quay lại theo <b>tĩnh mạch phổi</b> vào <b>tâm nhĩ trái</b>,
+        xuống <b>tâm thất trái</b> &mdash; buồng có thành dày nhất, vì nó phải
+        nuôi cả cơ thể &mdash; rồi đi ra theo <b>động mạch chủ</b>.</p>
+
+      <h3>Bốn chiếc van</h3>
+      <ul class="valve-key">
+        <li><span class="pip lub">1</span><span class="pip lub">2</span>
+          <b>Van ba lá</b> và <b>van hai lá</b> &mdash; gọi chung là van
+          <i>nhĩ&#8209;thất</i>, nằm giữa mỗi tâm nhĩ và tâm thất ngay bên dưới.</li>
+        <li><span class="pip dub">3</span><span class="pip dub">4</span>
+          <b>Van động mạch phổi</b> và <b>van động mạch chủ</b> &mdash; gọi chung
+          là van <i>bán nguyệt</i>, canh giữ hai lối ra.</li>
+      </ul>
+
+      <h2 class="h2b">Tiếng lub&#8209;dub</h2>
+      <p class="lede">Âm thanh ấy chính là tiếng các van đóng lại. Không phải tiếng
+        cơ tim, cũng không phải tiếng máu chảy &mdash; mà là tiếng van.</p>
+
+      <svg class="diagram" viewBox="0 0 340 118" role="img"
+           aria-label="Điện tâm đồ: tiếng lub trùng phức bộ QRS, tiếng dub ngay sau sóng T">
+        <line x1="80"  y1="18" x2="80"  y2="86" class="mark"/>
+        <line x1="162" y1="18" x2="162" y2="86" class="mark"/>
+        <line x1="320" y1="18" x2="320" y2="86" class="mark"/>
+        <path class="trace" d="M0,66 L30,66 Q42,48 55,66 L68,66 L72,72 L80,22
+                               L88,80 L95,66 L115,66 Q137,46 160,66 L280,66
+                               Q292,48 305,66 L312,66 L316,72 L320,26 L326,76 L332,66 L340,66"/>
+        <text class="wave" x="42"  y="42">P</text>
+        <text class="wave" x="80"  y="16">QRS</text>
+        <text class="wave" x="137" y="40">T</text>
+        <text class="beat" x="80"  y="100">LUB</text>
+        <text class="beat" x="162" y="100">DUB</text>
+        <text class="beat dim" x="320" y="100">LUB</text>
+        <line class="span" x1="84" y1="110" x2="158" y2="110"/>
+        <line class="span" x1="166" y1="110" x2="316" y2="110"/>
+        <text class="span-label" x="121" y="116">tâm thu</text>
+        <text class="span-label" x="241" y="116">tâm trương &mdash; dài hơn</text>
+      </svg>
+
+      <h3>Lub &mdash; van <span class="pip lub">1</span><span class="pip lub">2</span></h3>
+      <p>Tâm thất bắt đầu co bóp, hai van nhĩ&#8209;thất đóng sập lại cùng một lúc
+        để máu không trào ngược lên tâm nhĩ. Đây là <b>tiếng tim thứ nhất (T1)</b>:
+        trầm hơn và kéo dài hơn, trùng đúng với phức bộ <b>QRS</b> trên điện tâm đồ.</p>
+
+      <h3>Dub &mdash; van <span class="pip dub">3</span><span class="pip dub">4</span></h3>
+      <p>Nhát bóp kết thúc, tâm thất bắt đầu giãn ra, hai van bán nguyệt đóng lại
+        cùng lúc để máu không tụt ngược vào tim từ động mạch chủ và động mạch phổi.
+        Đây là <b>tiếng tim thứ hai (T2)</b>: ngắn hơn, cao hơn, vang lên ngay sau
+        sóng <b>T</b>.</p>
+
+      <h3>Vì sao khoảng nghỉ lại lệch</h3>
+      <p>Thì co bóp (<i>tâm thu</i>) ngắn hơn thì giãn ra (<i>tâm trương</i>). Vì vậy
+        quãng chờ từ <i>dub</i> vòng lại tới nhịp <i>lub</i> kế tiếp dài hơn quãng
+        giữa <i>lub</i> và <i>dub</i>. Chia đều hai quãng ấy ra, nó không còn nghe
+        giống tiếng tim nữa.</p>
+
+      <p class="tiein">Trái tim trên màn hình này chạy một chu kỳ 1,4 giây: co lại
+        còn 0,88 ở mốc 8% (lub), co tiếp còn 0,94 ở mốc 30% (dub), rồi nằm yên từ
+        mốc 44% đến hết. Hơn một nửa chu kỳ là khoảng nghỉ.</p>
+    </article>
+
+    <!-- ---------- THE ARROW ---------- -->
+    <article class="panel" id="panel-arrow" lang="vi">
+      <h2>Hai mũi tên của Cupid</h2>
+      <p class="lede">Thần Cupid không chỉ mang theo một loại tên. Ngài mang hai
+        loại, và chỉ một trong số đó là thứ bạn mong muốn.</p>
+
+      <svg class="diagram" viewBox="0 0 320 132" role="img"
+           aria-label="Mũi tên bịt vàng tượng trưng cho tình yêu, mũi tên bịt chì tượng trưng cho sự chán ghét">
+        <g stroke="#231F20" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+          <!-- gold -->
+          <path d="M14,40 L46,18 L58,23 L34,42 Z" fill="#E8434F"/>
+          <path d="M14,40 L46,62 L58,57 L34,38 Z" fill="#C32F39"/>
+          <path d="M26,40 L250,40" fill="none" stroke-width="11"/>
+          <path d="M26,40 L250,40" fill="none" stroke="#FFD24D" stroke-width="6.5"/>
+          <path d="M238,18 L296,40 L238,62 L250,40 Z" fill="#FFD24D"/>
+          <!-- lead -->
+          <path d="M14,104 L46,82 L58,87 L34,106 Z" fill="#9AA3AC"/>
+          <path d="M14,104 L46,126 L58,121 L34,102 Z" fill="#7C848C"/>
+          <path d="M26,104 L250,104" fill="none" stroke-width="11"/>
+          <path d="M26,104 L250,104" fill="none" stroke="#B9C0C7" stroke-width="6.5"/>
+          <path d="M238,82 L296,104 L238,126 L250,104 Z" fill="#B9C0C7"/>
+        </g>
+      </svg>
+      <p class="caption"><b class="gold">Vàng</b> &rarr; tình yêu &nbsp;&middot;&nbsp;
+        <b class="lead">Chì</b> &rarr; chán ghét</p>
+
+      <h3>Ngài là ai</h3>
+      <p>Cupid là thần tình yêu của La Mã, tương ứng với thần <b>Eros</b> của Hy
+        Lạp, và thường được coi là con của nữ thần Venus. Eros thời kỳ đầu là một
+        sức mạnh vũ trụ lớn lao; đến thời Hy Lạp hóa, hình ảnh ấy đã bị thay thế
+        trong trí tưởng tượng dân gian bằng một đứa trẻ có cánh cầm cung, gieo rắc
+        hỗn loạn tình ái cho tất cả những ai ở gần.</p>
+
+      <h3>Vì sao ngài trông như một em bé</h3>
+      <p>Từ thế kỷ 15, hình tượng của ngài gần như không còn phân biệt được với
+        <b>putto</b> &mdash; những thiên thần nhỏ mũm mĩm có cánh trong tranh thời
+        Phục Hưng. Chính sự hòa lẫn đó là lý do Cupid trên màn hình này là một em
+        bé chứ không phải một chàng trai.</p>
+
+      <h3>Mũi tên vàng và mũi tên chì</h3>
+      <p>Trong ống tên của ngài có cả hai loại. Mũi tên bịt vàng khơi lên tình yêu
+        và khát khao; mũi tên bịt chì gây ra sự thờ ơ, thậm chí là ghê tởm. Bất kỳ
+        ai trúng tên &mdash; người phàm hay thần linh &mdash; đều không thể cưỡng lại.</p>
+
+      <h3>Apollo và Daphne</h3>
+      <p>Trong Quyển I tác phẩm <i>Metamorphoses</i> (Biến Hình Ký) của Ovid,
+        Apollo chế giễu tài bắn cung của Cupid. Cupid đáp lại bằng cả hai mũi tên
+        cùng lúc: tên vàng bắn vào Apollo, tên chì bắn vào tiên nữ Daphne. Apollo
+        bùng cháy vì khát khao, còn Daphne thì ghê sợ lùi xa, và khi bị đuổi theo,
+        nàng đã hóa thành cây nguyệt quế. Trong câu chuyện ấy hai mũi tên luôn đi
+        cùng nhau &mdash; bởi điều nó muốn nói chính là thứ tình cảm chỉ đến từ
+        một phía.</p>
+
+      <p class="tiein">Mũi tên mà Cupid bắn trên màn hình này được bịt vàng. Đó
+        chính là mũi tên có tác dụng.</p>
+    </article>
+  </section>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
